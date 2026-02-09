@@ -18,7 +18,35 @@ phases:
       - if [ -f requirements.txt ]; then pip install -r requirements.txt -t package; fi
       - cp lambda_function.py package/
       - cd package && zip -r ../lambda.zip . && cd ..
+
+      # 1) Lambda 코드 업데이트
       - aws lambda update-function-code --function-name "$FUNCTION_NAME" --zip-file fileb://lambda.zip
-      - aws lambda wait function-updated --function-name "$FUNCTION_NAME"
+
+      # 2) 업데이트 완료 대기 (최대 5분)
+      - |
+        for i in $(seq 1 60); do
+          STATUS=$(aws lambda get-function-configuration --function-name "$FUNCTION_NAME" --query 'LastUpdateStatus' --output text)
+          echo "LastUpdateStatus=$STATUS (try $i/60)"
+          if [ "$STATUS" = "Successful" ]; then
+            break
+          fi
+          if [ "$STATUS" = "Failed" ]; then
+            echo "Lambda update FAILED"
+            aws lambda get-function-configuration --function-name "$FUNCTION_NAME"
+            exit 1
+          fi
+          sleep 5
+        done
+        if [ "$STATUS" != "Successful" ]; then
+          echo "Timed out waiting for Lambda update to complete"
+          aws lambda get-function-configuration --function-name "$FUNCTION_NAME"
+          exit 1
+        fi
+
+      # 3) 새 버전 발행
       - VERSION=$(aws lambda publish-version --function-name "$FUNCTION_NAME" --query 'Version' --output text)
+
+      # 4) Alias 이동 (dev/prod/Test 등)
       - aws lambda update-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" --function-version "$VERSION"
+
+      - echo "Deployed $FUNCTION_NAME version $VERSION to alias $ALIAS_NAME"
