@@ -4,12 +4,15 @@ env:
   variables:
     FUNCTION_NAME: "bememory_log_test"
     FROM_ALIAS: "Test"
-    TO_ALIAS: "Prod"
+    TO_ALIAS: "prod"
 
 phases:
   build:
     commands:
+      # 1) Test(alias)가 가리키는 버전 번호 가져오기
       - VER=$(aws lambda get-alias --function-name "$FUNCTION_NAME" --name "$FROM_ALIAS" --query 'FunctionVersion' --output text)
       - echo "Promoting version $VER from $FROM_ALIAS to $TO_ALIAS"
+
+      # 2) prod alias를 그 버전으로 이동
       - aws lambda update-alias --function-name "$FUNCTION_NAME" --name "$TO_ALIAS" --function-version "$VER"
-      - echo "Moved $TO_ALIAS -> $VER"
+      - echo "Moved alias $TO_ALIAS -> $VER"
