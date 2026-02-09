@@ -19,6 +19,6 @@ phases:
       - cp lambda_function.py package/
       - cd package && zip -r ../lambda.zip . && cd ..
       - aws lambda update-function-code --function-name "$FUNCTION_NAME" --zip-file fileb://lambda.zip
+      - aws lambda wait function-updated --function-name "$FUNCTION_NAME"
       - VERSION=$(aws lambda publish-version --function-name "$FUNCTION_NAME" --query 'Version' --output text)
       - aws lambda update-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" --function-version "$VERSION"
-     
