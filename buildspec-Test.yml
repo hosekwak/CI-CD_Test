@@ -50,3 +50,5 @@ phases:
       - aws lambda update-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" --function-version "$VERSION"
 
       - echo "Deployed $FUNCTION_NAME version $VERSION to alias $ALIAS_NAME"
+
+      # 5) Test
