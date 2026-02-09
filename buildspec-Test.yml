@@ -20,6 +20,5 @@ phases:
       - cd package && zip -r ../lambda.zip . && cd ..
       - aws lambda update-function-code --function-name "$FUNCTION_NAME" --zip-file fileb://lambda.zip
       - VERSION=$(aws lambda publish-version --function-name "$FUNCTION_NAME" --query 'Version' --output text)
-      - 'echo "Published version: $VERSION"
       - aws lambda update-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" --function-version "$VERSION"
-      - echo "Moved $ALIAS_NAME -> $VERSION"
+     
