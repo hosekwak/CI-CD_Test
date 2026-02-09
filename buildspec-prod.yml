@@ -1,0 +1,15 @@
+version: 0.2
+
+env:
+  variables:
+    FUNCTION_NAME: "bememory_log_test"
+    FROM_ALIAS: "Test"
+    TO_ALIAS: "Prod"
+
+phases:
+  build:
+    commands:
+      - VER=$(aws lambda get-alias --function-name "$FUNCTION_NAME" --name "$FROM_ALIAS" --query 'FunctionVersion' --output text)
+      - echo "Promoting version $VER from $FROM_ALIAS to $TO_ALIAS"
+      - aws lambda update-alias --function-name "$FUNCTION_NAME" --name "$TO_ALIAS" --function-version "$VER"
+      - echo "Moved $TO_ALIAS -> $VER"

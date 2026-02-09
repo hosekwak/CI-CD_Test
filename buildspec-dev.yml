@@ -1,0 +1,25 @@
+version: 0.2
+
+env:
+  variables:
+    FUNCTION_NAME: "bememory_log_test"
+    ALIAS_NAME: "Test"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.14
+    commands:
+      - python -m pip install --upgrade pip
+
+  build:
+    commands:
+      - mkdir -p package
+      - if [ -f requirements.txt ]; then pip install -r requirements.txt -t package; fi
+      - cp lambda_function.py package/
+      - cd package && zip -r ../lambda.zip . && cd ..
+      - aws lambda update-function-code --function-name "$FUNCTION_NAME" --zip-file fileb://lambda.zip
+      - VERSION=$(aws lambda publish-version --function-name "$FUNCTION_NAME" --query 'Version' --output text)
+      - echo "Published version: $VERSION"
+      - aws lambda update-alias --function-name "$FUNCTION_NAME" --name "$ALIAS_NAME" --function-version "$VERSION"
+      - echo "Moved $ALIAS_NAME -> $VERSION"
